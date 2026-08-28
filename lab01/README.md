@@ -172,16 +172,16 @@ Indice:
 
 #### 1.2 Diagramas
 
-
 ## Simulaciones 
-
+![sum4b](image.png)
 ### 1. Simulación del sumador/restador
-
+![sumrest4b](image-1.png)
 #### 1.1 Descripción
 
 #### 1.2 Diagrama
-
-
+![diagrama sumador restador de 4b](image-2.png)
+![diagrama sumador de 4b](image-3.png)
+![diagrama dumador de 1b](image-4.png)
 ## Evidencias de implementación
 
 
