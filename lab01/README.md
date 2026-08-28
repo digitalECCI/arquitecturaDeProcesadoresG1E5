@@ -183,6 +183,7 @@ Indice:
 ![diagrama sumador de 4b](image-3.png)
 ![diagrama dumador de 1b](image-4.png)
 ## Evidencias de implementación
+### Circuito sumador-restador implementado en la FPGA
 [![Ver video en YouTube](https://img.youtube.com/vi/ql6rKRaUWww/0.jpg)](https://youtu.be/ql6rKRaUWww)
 
 
