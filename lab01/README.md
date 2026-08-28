@@ -149,6 +149,27 @@ Es el módulo de más alto nivel ("top"), pensado para mapear directamente a los
         .Neg(LED[4])
     );
 Conecta SW[3:0] a A, SW[7:4] a B y SW[8] a Sel. La salida S se conecta a LED[3:0] (magnitud) y Neg a LED[4] (signo). El puerto Co queda sin conectar, ya que en este nivel no interesa el acarreo crudo del sumador interno, sino solo si el resultado final es negativo.
+# Integrantes
+* [<!-- Remplace aqui nombre 1. -->](<!-- Remplace aqui link de usario 1 de github -->) 
+* [<!-- Remplace aqui nombre 2. -->](<!-- Remplace aqui link de usario 2 de github -->) 
+* [<!-- Remplace aqui nombre 3. -->](<!-- Remplace aqui link de usario 3 de github -->) 
+# Informe
+
+Indice:
+
+1. [Documentación](#documentación-de-los-circuitos-implementados-implementado)
+2. [Simulaciones](#simulaciones)
+3. [Evidencias de implementación](#evidencias-de-implementación)
+4. [Preguntas](#preguntas)
+5. [Conclusiones](#conclusiones)
+6. [Referencias](#referencias)
+
+## Documentación del diseño implementado
+
+### 1. Sumador/Restador
+
+#### 1.1 Descripción
+
 #### 1.2 Diagramas
 
 
