@@ -202,7 +202,7 @@ Circuito digital capaz de sumar o restar dos números de 4 bits mediante compuer
 
 ### 🎥 Video de demostración
 
-[![Ver video de la práctica](https://img.youtube.com/vi/g3TUQt2ir08/maxresdefault.jpg)](https://youtu.be/g3TUQt2ir08)
+[![Ver video de la práctica](https://img.youtube.com/vi/g3TUQt2ir08/hqdefault.jpg)](https://youtu.be/g3TUQt2ir08)
 
 ## Conclusiones 
 El circuito funcionó a la perfección: suma y resta correctamente cualquier combinación de los switches, sin errores en ningún caso probado.
