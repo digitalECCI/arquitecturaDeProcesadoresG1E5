@@ -196,6 +196,13 @@ En la simulación mediante formas de onda (Waveforms) se verifica el correcto co
   * Cuando $A < B$, el circuito realiza automáticamente el complemento a 2 para obtener la magnitud positiva real y conmuta la señal `Neg` a $1$, activando el segmento `-` en el display `HEX2`.
 * **Transiciones Combinacionales:** Se comprueba que no existen estados indefinidos (`X` o `Z`) y que la salida de los displays de 7 segmentos sigue la codificación de ánodo común (activa en bajos / $0$).
 ## Videos
+# Práctica 2 - Sumador y Restador de 4 Bits
+
+Circuito digital capaz de sumar o restar dos números de 4 bits mediante compuertas lógicas. La operación se selecciona con un switch y el resultado se muestra en displays de 7 segmentos, incluyendo el signo cuando la resta produce un resultado negativo.
+
+### 🎥 Video de demostración
+
+[![Ver video de la práctica](https://img.youtube.com/vi/g3TUQt2ir08/maxresdefault.jpg)](https://youtu.be/g3TUQt2ir08)
 
 ## Conclusiones 
 El circuito funcionó a la perfección: suma y resta correctamente cualquier combinación de los switches, sin errores en ningún caso probado.
