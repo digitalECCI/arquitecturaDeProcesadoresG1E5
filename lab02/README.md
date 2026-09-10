@@ -128,6 +128,73 @@ HEX2 se usa solo para mostrar el signo: enciende únicamente el segmento g (el g
 
 ## Diagramas
 
+A continuación se explican los diagramas RTL generados por la herramienta de síntesis, los cuales muestran la interconexión física de las compuertas y módulos primitivos implementados.
+
+### 1. Esquema General del Sistema (Top-Level)
+
+![Diagrama Top Level](image.png) 
+
+En el diagrama principal se observa el flujo de datos completo desde los interruptores de entrada (`SW`) hasta los displays de 7 segmentos (`HEX`):
+
+1. **Entradas (`SW[8..0]`):**
+   * `SW[3..0]` corresponden al operando $A$.
+   * `SW[7..4]` corresponden al operando $B$.
+   * `SW[8]` actúa como la señal de control `Sel` ($0 = \text{Suma}$, $1 = \text{Resta}$).
+
+2. **Bloque `sumadorRestador4b:restador`:**
+   * Recibe $A$, $B$ y `Sel`.
+   * Procesa la operación mediante la inversión condicional con compuertas **XOR** (para el complemento a 2) y la cascada de **sumadores de 1 bit**.
+   * Entrega la magnitud corregida `S[3..0]`, el acarreo de salida `Co` y la bandera de signo `Neg`.
+
+3. **Lógica del 5to Bit (`val4` mediante compuerta AND con inversor):**
+   * Se observa una compuerta **AND** que recibe el acarreo `Co` y la señal `Sel` negada ($\sim Sel$).
+   * **Explicación:** Si estamos sumando ($Sel = 0$), la entrada negada se vuelve $1$. Si hay un overflow/acarreo ($Co = 1$), la compuerta AND activa `val4 = 1`. Esto permite manejar resultados de suma de hasta 5 bits ($15 + 15 = 30$). En resta ($Sel = 1$), el inversor apaga la compuerta cancelando el acarreo.
+
+4. **Concatenación a Bus de 5 Bits (`val[4..0]`):**
+   * Mediante un buffer/combinador (`comb~`), se une la magnitud de 4 bits `S[3..0]` con el bit más significativo `val4` para formar un número binario de 5 bits ($0$ a $30$).
+
+5. **Bloque `bin2bcd5:conv`:**
+   * Recibe el bus de 5 bits `val[4..0]` y entrega las Decenas (`decenas[1..0]`) y Unidades (`unidades[3..0]`) en formato BCD.
+
+6. **Decodificadores BCD a 7 Segmentos (`bcd7seg`):**
+   * **`dec_u`:** Decodifica las unidades directamente hacia el display `HEX0[6..0]`.
+   * **`dec_d`:** Recibe las decenas (completadas con ceros mediante la conexión a tierra/GND observable en el bus) y las manda al display `HEX1[6..0]`.
+
+7. **Manejo del Signo Negativo (`HEX2`):**
+   * La señal `Neg` pasa por un buffer e inversor hacia la línea `HEX2[6]` (correspondiente al segmento central o "guion" del display).
+   * Las demás líneas de `HEX2` están conectadas a VCC / nivel alto ($1$), manteniéndolas apagadas fija y estructuralmente (ya que los displays son de ánodo común).
+
+---
+
+### 2. Arquitectura Interna del Conversor Binario a BCD (`bin2bcd5`)
+
+![Diagrama BCD Interno](image-1.png)
+Debido a que el laboratorio exigía **no usar lenguaje de alto nivel** (como bucles `for`, sentencias `if/else` o sumas directas), se implementó el algoritmo **Double Dabble (Shift-Add-3)** de manera puramente combinacional y "desenrollada" en hardware:
+
+1. **Bloques `add3_if_ge5` en Cascada:**
+   * El diagrama muestra múltiples instancias identificadas como `a0t`, `a0u`, `a1t`, `a1u`, etc. ('t' para *tens*/decenas y 'u' para *units*/unidades).
+   * Cada bloque `add3_if_ge5` internamente contiene:
+     * Un **Comparador booleano** que evalúa si el nibble es mayor o igual a 5 ($GE5 = A_3 + A_2 \cdot (A_1 + A_0)$).
+     * Un **Sumador primitivo de 4 bits** que calcula $A + 3$ (`0011` en binario).
+     * Un **Multiplexor de 4 bits** (hecho de compuertas AND-OR-NOT) que selecciona entre el número original o el número $+ 3$ según el resultado del comparador.
+
+2. **Desplazamientos por Interconexión (Shifting):**
+   * En lugar de usar registros de desplazamiento con reloj, el *Shift* se realiza conectando físicamente los cables desfasados un bit hacia la izquierda entre cada etapa.
+   * La señal recorre las 5 etapas (una por cada bit del vector de entrada `val[4..0]`), convirtiendo el valor binario a BCD mediante propagación lógica combinacional en tiempo real.
+
+---
+
+## Simulaciones
+
+![Simulacion de Formas de Onda](image-2.png) 
+
+En la simulación mediante formas de onda (Waveforms) se verifica el correcto comportamiento temporal y lógico del circuito ante diferentes vectores de prueba:
+
+* **Pruebas de Suma ($Sel = 0$):** Se observa cómo al sumar dos operandos cuyo resultado supera $15$ (por ejemplo $15 + 15$), el bit de acarreo se activa correctamente elevando la salida BCD a $30$, mostrando `'3'` en `HEX1` y `'0'` en `HEX0`.
+* **Pruebas de Resta ($Sel = 1$):** 
+  * Cuando $A \ge B$, la resta da un resultado positivo, la bandera `Neg` permanece en $0$ y los displays muestran la diferencia exacta.
+  * Cuando $A < B$, el circuito realiza automáticamente el complemento a 2 para obtener la magnitud positiva real y conmuta la señal `Neg` a $1$, activando el segmento `-` en el display `HEX2`.
+* **Transiciones Combinacionales:** Se comprueba que no existen estados indefinidos (`X` o `Z`) y que la salida de los displays de 7 segmentos sigue la codificación de ánodo común (activa en bajos / $0$).
 ## Videos
 
 ## Conclusiones 
