@@ -152,6 +152,54 @@ Usa un LED para indicar que la multiplicación terminó (done).
 
 ## Esquemas y Diagramas
 
+### 1. Diagrama RTL Top-Level del Sistema
+
+![Diagrama RTL Top Level](image.png)
+
+**Explicación:**
+Muestra la arquitectura global y el flujo de datos entre los módulos del sistema:
+* **Entradas físicas:** `KEY[1:0]` (botones) se filtran a través de los bloques `deb_init` y `deb_rst` para eliminar el ruido mecánico. Los switches `SW[5:0]` entregan los operandos $MD$ (multiplicando) y $MR$ (multiplicador).
+* **Procesamiento:** El módulo `u_mult` realiza la multiplicación secuencial y entrega el resultado binario de 6 bits (`PP[5..0]`).
+* **Conversión y Salida:** El bloque `u_bin2bcd` transforma los 6 bits a dos dígitos BCD (`ones` y `tens`), los cuales son decodificados por `u_hex0` y `u_hex1` para ser mostrados en los displays de 7 segmentos (`HEX0` y `HEX1`). La señal `done` enciende el LED `LEDR[0]` al finalizar el proceso.
+
+---
+
+### 2. Esquema RTL Interno del Multiplicador (`u_mult`)
+
+![RTL Interno del Multiplicador](image-1.png)
+
+**Explicación:**
+Representa la estructura del *Datapath* (Ruta de Datos) controlada por la FSM:
+* **Registros $A$, $B$ y $PP$:** $A$ almacena el multiplicando expandido a 6 bits, $B$ contiene el multiplicador de 3 bits, y $PP$ es el acumulador del producto parcial.
+* **Sumador (`Add0`):** Realiza la suma combinacional de $PP + A$ cuando la FSM lo requiere.
+* **Multiplexores:** Permiten alternar entre la carga inicial de los datos y las operaciones de desplazamiento ($A \ll 1$ y $B \gg 1$).
+* **Bloque de Estado (`state`):** Circuito de control que habilita las señales de carga, suma y corrimiento en el orden correcto.
+
+---
+
+### 3. Diagrama de Transición de Estados (FSM)
+
+![Diagrama de Estados FSM](image-2.png)
+
+**Explicación:**
+Modela la lógica secuencial que ejecuta el algoritmo *shift-and-add*:
+* **`START`:** Estado de reposo. Permanece aquí hasta recibir el pulso de inicio (`init`).
+* **`CHECK`:** Evalúa el bit menos significativo del multiplicador ($B[0]$). Si es `1`, pasa a `ADD`; si es `0`, salta directamente a `SHIFT`.
+* **`ADD`:** Suma el registro $A$ al acumulador $PP$ y pasa a `SHIFT`.
+* **`SHIFT`:** Desplaza $A$ a la izquierda y $B$ a la derecha. Si $B$ llega a `0`, avanza a `END`; de lo contrario, regresa a `CHECK` para el siguiente bit.
+* **`END`:** Activa la bandera `done` por un ciclo de reloj para indicar que el resultado está listo y regresa a `START`.
+
+---
+
+### 4. Simulación Funcional (Formas de Onda)
+
+![Simulación Waveform](image-3.png)
+
+**Explicación:**
+Demuestra la validación temporal del algoritmo en simulación:
+* **Prueba de casos:** Muestra la ejecución consecutiva de multiplicaciones variando $MD$ y $MR$ de 0 a 7.
+* **Verificación de resultado máximo:** Se resalta el caso límite donde $MD = 7$ y $MR = 7$, obteniendo correctamente $PP = 49$ (`6'b110001` en binario).
+* **Sincronización:** Se evidencia que por cada cálculo, la señal `done` genera un pulso de un ciclo de reloj en el instante exacto en que el producto final es válido.
 
 ## Video
 
