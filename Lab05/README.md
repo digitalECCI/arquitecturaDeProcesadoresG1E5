@@ -15,7 +15,7 @@ En este laboratorio se armó en la FPGA una ALU de 4 bits hace ocho operaciones 
         case (opcode)
             3'b000: result = {4'b0000, A} + {4'b0000, B}; // Suma
             3'b001: result = {4'b0000, A} - {4'b0000, B}; // Resta
-            3'b010: result = A * B;                       // Multiplicación![Uploading WhatsApp Image 2026-11-08 at 9.53.05 PM.jpeg…]()
+            3'b010: result = A * B;                       // Multiplicación<img width="1600" height="716" alt="WhatsApp Image 2026-11-08 at 9 53 05 PM" src="https://github.com/user-attachments/assets/f3024d55-f9d4-4625-8489-b3cc2632be54" />
 
             3'b011: ... // Mayor de los dos
             3'b100: result = {3'b000, A, 1'b0};           // A << 1
@@ -170,7 +170,7 @@ los LEDs muestran el valor actual, la bandera zero y si hay una transmisión en 
 
 ### Figura 1. Diagrama RTL del sistema completo (`Top_lab04`)
 
-![RTL Top]([https://github.com/user-attachments/assets/cfd4228f-f061-4da7-b566-9536a14a1998)
+![RTL Top](https://github.com/user-attachments/assets/cfd4228f-f061-4da7-b566-9536a14a1998)
 
 Esta figura muestra el diagrama RTL generado por Quartus para el módulo principal. Las entradas son `MAX10_CLK1_50` (reloj de 50 MHz), `KEY[1:0]`, `SW[9:0]` y `GPIO[8:1]`. Las salidas son `HEX0` a `HEX5`, `LEDR[9:0]`, `UART_TXD` y `UART_TXD_ALT`. Los bloques principales son:
 
@@ -194,7 +194,7 @@ Es el mismo diagrama de la Figura 1, pero con los módulos `banco_registros` y `
 
 ### Figura 3. Máquina de estados del transmisor UART (`uart_tx`)
 
-![FSM UART](URL_IMAGEN_3)
+![FSM UART](https://github.com/user-attachments/assets/70342736-124b-4ced-ad3f-8d75b8587527)
 
 Diagrama de estados del módulo `uart_tx`, con reset asíncrono hacia `STATE_IDLE`. Tiene cuatro estados en secuencia:
 
@@ -207,7 +207,7 @@ Cada estado permanece en sí mismo (lazo propio) hasta completar el tiempo de bi
 
 ### Figura 4. Máquina de estados de la secuencia de envío (`seq_state`)
 
-![FSM secuencia](URL_IMAGEN_2)
+![FSM secuencia](https://github.com/user-attachments/assets/a9ae70e9-5651-4b99-975a-7bb60a02c158)
 
 Diagrama de estados que controla el envío de los tres caracteres (nibble alto, nibble bajo y espacio) en el top. Tiene siete estados en cadena:
 
