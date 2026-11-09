@@ -166,6 +166,44 @@ Máquina de estados que envía 3 caracteres seguidos: nibble alto, nibble bajo y
 los LEDs muestran el valor actual, la bandera zero y si hay una transmisión en curso. Además, HEX2/HEX3 muestran el resultado, HEX4 la dirección y HEX5 el opcode (HEX0 y HEX1 se apagan por estar dañados).
 ## Esquemas y Diagramas
 
+### Figura 1. Simulación de la transmisión UART (testbench `tb_top_lab04`)
+
+![Simulación UART](https://github.com/user-attachments/assets/4435fc9e-a2a9-4364-a286-52edf5b33cdd)
+
+Esta figura muestra la forma de onda del sistema completo en la ventana de 35 ms a 37 ms. Las señales relevantes son:
+
+- **KEY[1:0] / KEY[1]:** KEY[1] es el botón "Ejecutar". Pasa de 0 a 1 cerca de los 36 ms, es decir, el botón se suelta (es activo en bajo). El pulso de ejecución sale del anti-rebote en el flanco de bajada, o sea al presionarlo.
+- **GPIO[8:1] = 0x97:** configuración de los DIP switches externos. Con `GPIO[8]=1` está activo `read_en`, con `GPIO[7]=0` no se escribe, `GPIO[6:4]=010` selecciona el registro 2 y `GPIO[3:1]=111` es el opcode.
+- **UART_TXD:** línea serial de salida. Se ve en reposo en 1 y los bits de start, datos y stop de cada byte, cada uno de duración constante (≈104 µs, 9600 baudios).
+- **rx_byte[7:0]:** byte recibido y decodificado por el testbench a partir de `UART_TXD`. Los valores `30`, `31`, `35`, `34`, `30` y `20` en hexadecimal corresponden a los caracteres ASCII `'0'`, `'1'`, `'5'`, `'4'`, `'0'` y espacio. Esto confirma que el dato se transmite como caracteres hexadecimales ASCII seguidos de un espacio, tal como lo genera la máquina de estados del top.
+
+### Figura 2. Simulación de la ALU de 4 bits (`u_alu`)
+
+![Simulación ALU](https://github.com/user-attachments/assets/c26cd847-1e4f-4304-be18-131c1297a467)
+
+Esta figura muestra las entradas y salidas de la ALU durante la prueba con los operandos **A = 7** y **B = 2**, mientras cambia el opcode:
+
+| Opcode | Operación | Resultado esperado | Resultado en simulación |
+|:---:|:---|:---:|:---:|
+| `000` | Suma (7 + 2) | 9 | `09` |
+| `100` | Desplazamiento A << 1 | 14 | `0E` |
+| `101` | AND (7 & 2) | 2 | `02` |
+| `111` | XOR (7 ^ 2) | 5 | `05` |
+
+La bandera **zero** está en 1 al inicio, cuando el resultado es `00`, y baja a 0 cuando aparece el primer resultado distinto de cero. Como la ALU es combinacional, el resultado cambia de inmediato al modificarse A, B o el opcode, sin necesidad de reloj.
+
+### Figura 3. Simulación del banco de registros (`u_banco`)
+
+![Simulación banco de registros](https://github.com/user-attachments/assets/3d4792da-78ab-4ca2-804b-119c46966cfa)
+
+Esta figura muestra el comportamiento del banco de registros de 8×8 bits:
+
+- **rst:** pulso inicial en alto que pone los 8 registros en cero, por lo que `data_out` arranca en `00`.
+- **clk:** reloj del sistema, que sincroniza la escritura.
+- **data_in[7:0]:** toma sucesivamente los valores `09`, `0E`, `02` y `05`, que son los resultados de la ALU de la figura anterior y los datos que se quieren guardar.
+- **addr[2:0]:** dirección del registro; pasa de `000` a `010` cerca de los 5.7 µs, y con ello se apunta al registro 2.
+- **write_en:** habilita la escritura. El dato solo se almacena en el flanco de reloj en que `write_en = 1`.
+- **data_out[7:0]:** valor del registro apuntado por `addr`. La lectura es combinacional, por lo que cambia apenas varía la dirección.
 
 
 ## Conclusiones
