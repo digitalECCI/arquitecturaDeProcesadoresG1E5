@@ -15,7 +15,8 @@ En este laboratorio se armó en la FPGA una ALU de 4 bits hace ocho operaciones 
         case (opcode)
             3'b000: result = {4'b0000, A} + {4'b0000, B}; // Suma
             3'b001: result = {4'b0000, A} - {4'b0000, B}; // Resta
-            3'b010: result = A * B;                       // Multiplicación
+            3'b010: result = A * B;                       // Multiplicación![Uploading WhatsApp Image 2026-11-08 at 9.53.05 PM.jpeg…]()
+
             3'b011: ... // Mayor de los dos
             3'b100: result = {3'b000, A, 1'b0};           // A << 1
             3'b101: result = {4'b0000, (A & B)};          // AND
@@ -164,9 +165,59 @@ Máquina de estados que envía 3 caracteres seguidos: nibble alto, nibble bajo y
     assign LEDR[9]   = (seq_state != SEQ_IDLE) || uart_busy;
 
 los LEDs muestran el valor actual, la bandera zero y si hay una transmisión en curso. Además, HEX2/HEX3 muestran el resultado, HEX4 la dirección y HEX5 el opcode (HEX0 y HEX1 se apagan por estar dañados).
+
 ## Esquemas y Diagramas
 
-### Figura 1. Simulación de la transmisión UART (testbench `tb_top_lab04`)
+### Figura 1. Diagrama RTL del sistema completo (`Top_lab04`)
+
+![RTL Top]([https://github.com/user-attachments/assets/cfd4228f-f061-4da7-b566-9536a14a1998)
+
+Esta figura muestra el diagrama RTL generado por Quartus para el módulo principal. Las entradas son `MAX10_CLK1_50` (reloj de 50 MHz), `KEY[1:0]`, `SW[9:0]` y `GPIO[8:1]`. Las salidas son `HEX0` a `HEX5`, `LEDR[9:0]`, `UART_TXD` y `UART_TXD_ALT`. Los bloques principales son:
+
+- **debouncer:u_debouncer:** recibe `KEY[1]` y entrega `btn_pulse`, el pulso limpio de ejecución.
+- **alu_4bit:u_alu:** recibe A = `SW[3:0]`, B = `SW[7:4]` y el `opcode` de `GPIO[3:1]`. Entrega `result[7:0]` y la bandera `zero`.
+- **banco_registros:u_banco:** recibe la dirección, el dato a guardar y `write_en`. Su salida `data_out` pasa por el multiplexor `comb~[8:1]`, que elige entre el registro y la ALU según `read_en`.
+- **display_7seg (hex2 a hex5):** cuatro decodificadores que muestran el resultado (HEX2/HEX3), la dirección (HEX4) y el opcode (HEX5). `HEX0` y `HEX1` están fijos en `7'h7F` (apagados).
+- **LessThan0/1, Add0/1 y multiplexores `ascii_high` / `ascii_low`:** convierten cada nibble a su carácter ASCII hexadecimal (suma 48 o 55 según sea menor que 10).
+- **seq_state (bloque amarillo):** máquina de estados que ordena el envío de los tres caracteres. Sus salidas controlan los selectores `Selector0` a `Selector8`, y de ahí salen `tx_data_reg` y `tx_start_reg`.
+- **uart_tx:u_uart:** transmisor serial que genera `UART_TXD`.
+- **Compuertas de control:** `uart_tx_trigger` (`read_en & btn_pulse`), `comb~0` (`write_en & btn_pulse`) y la OR que forma `LEDR[9]` (`seq_state != SEQ_IDLE` o `uart_busy`).
+
+### Figura 2. Diagrama RTL expandido (banco de registros y UART)
+
+![RTL expandido](https://github.com/user-attachments/assets/2fc3ded4-c3f0-4835-90b2-45238419936f)
+
+Es el mismo diagrama de la Figura 1, pero con los módulos `banco_registros` y `uart_tx` desplegados para ver su interior:
+
+- **banco_registros:** se ven los 8 registros de 8 bits (`registros~[7:0]`, `[15:8]`, … `[63:56]`). Cada uno tiene su multiplexor de habilitación, que carga `data_in` solo cuando `write_en` está activo y `addr` apunta a ese registro.
+- **uart_tx:** se ven sus elementos de memoria: `bit_index[2:0]` (bit que se está enviando), `clk_count[12:0]` (conteo de los 5208 ciclos por bit), `data_reg[7:0]` (byte a transmitir), `state` (máquina de estados, en amarillo), `tx_busy~reg0` y `tx_serial~reg0`.
+
+### Figura 3. Máquina de estados del transmisor UART (`uart_tx`)
+
+![FSM UART](URL_IMAGEN_3)
+
+Diagrama de estados del módulo `uart_tx`, con reset asíncrono hacia `STATE_IDLE`. Tiene cuatro estados en secuencia:
+
+- **STATE_IDLE:** la línea está en 1 y espera `tx_start`.
+- **STATE_START:** envía el bit de inicio (0) durante 5208 ciclos.
+- **STATE_DATA:** envía los 8 bits de datos, del menos al más significativo.
+- **STATE_STOP:** envía el bit de parada (1) y regresa a `STATE_IDLE`.
+
+Cada estado permanece en sí mismo (lazo propio) hasta completar el tiempo de bit.
+
+### Figura 4. Máquina de estados de la secuencia de envío (`seq_state`)
+
+![FSM secuencia](URL_IMAGEN_2)
+
+Diagrama de estados que controla el envío de los tres caracteres (nibble alto, nibble bajo y espacio) en el top. Tiene siete estados en cadena:
+
+`SEQ_IDLE → SEQ_HIGH_START → SEQ_HIGH_WAIT → SEQ_LOW_START → SEQ_LOW_WAIT → SEQ_SPC_START → SEQ_SPC_WAIT → SEQ_IDLE`
+
+- Los estados **START** cargan el carácter y generan el pulso `tx_start`.
+- Los estados **WAIT** esperan a que el UART termine (`uart_busy = 0`) antes de pasar al siguiente carácter.
+- Al terminar `SEQ_SPC_WAIT` se vuelve a `SEQ_IDLE`, listo para una nueva transmisión.
+
+### Figura 5. Simulación de la transmisión UART (testbench `tb_top_lab04`)
 
 ![Simulación UART](https://github.com/user-attachments/assets/4435fc9e-a2a9-4364-a286-52edf5b33cdd)
 
@@ -177,7 +228,7 @@ Esta figura muestra la forma de onda del sistema completo en la ventana de 35 ms
 - **UART_TXD:** línea serial de salida. Se ve en reposo en 1 y los bits de start, datos y stop de cada byte, cada uno de duración constante (≈104 µs, 9600 baudios).
 - **rx_byte[7:0]:** byte recibido y decodificado por el testbench a partir de `UART_TXD`. Los valores `30`, `31`, `35`, `34`, `30` y `20` en hexadecimal corresponden a los caracteres ASCII `'0'`, `'1'`, `'5'`, `'4'`, `'0'` y espacio. Esto confirma que el dato se transmite como caracteres hexadecimales ASCII seguidos de un espacio, tal como lo genera la máquina de estados del top.
 
-### Figura 2. Simulación de la ALU de 4 bits (`u_alu`)
+### Figura 6. Simulación de la ALU de 4 bits (`u_alu`)
 
 ![Simulación ALU](https://github.com/user-attachments/assets/c26cd847-1e4f-4304-be18-131c1297a467)
 
@@ -192,7 +243,7 @@ Esta figura muestra las entradas y salidas de la ALU durante la prueba con los o
 
 La bandera **zero** está en 1 al inicio, cuando el resultado es `00`, y baja a 0 cuando aparece el primer resultado distinto de cero. Como la ALU es combinacional, el resultado cambia de inmediato al modificarse A, B o el opcode, sin necesidad de reloj.
 
-### Figura 3. Simulación del banco de registros (`u_banco`)
+### Figura 7. Simulación del banco de registros (`u_banco`)
 
 ![Simulación banco de registros](https://github.com/user-attachments/assets/3d4792da-78ab-4ca2-804b-119c46966cfa)
 
