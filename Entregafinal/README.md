@@ -144,6 +144,50 @@ Usa secuencias de escape ANSI para redibujar siempre en el mismo lugar de la ter
 
 ## Esquemas y Diagramas
 
+### 1. Simulación del shell en terminal (testbench `tb_shell.v`)
+
+![Salida de la simulación en terminal](https://github.com/user-attachments/assets/4016439d-d7e9-4507-be00-7f8212026f64)
+
+Salida de la consola al simular el PicoSoC con el testbench `tb_shell.v`. El testbench envía comandos por la línea `rx` y muestra lo que el shell responde por `tx`:
+
+- `sw` → el shell imprime `switches = 0b0101`, que coincide con `sw[3:0] = 5` de la simulación.
+- `led 1 on` → responde `ok`, y el testbench comprueba `led = 0010 (esperado 0010)`.
+- `leds 0xAA` → responde `ok`. Como solo se conservan los 4 bits bajos (`0xAA & 15 = 0xA`), el testbench verifica `led = 1010 (esperado 1010)`.
+- `calc 6 * 7` → responde `6 * 7 = 42`.
+- `help` → lista todos los comandos disponibles.
+- Al final el testbench imprime `[TB] fin` y llama a `$finish` (≈ 42.97 ms simulados).
+
+Con esto se comprueba que el shell recibe, interpreta y responde correctamente cada comando.
+
+### 2. Formas de onda completas (GTKWave)
+
+![Formas de onda de toda la simulación](https://github.com/user-attachments/assets/86fbdd62-1a59-44e8-96d6-c139d422459f)
+
+Vista general de los 0 a ~42 ms de simulación en GTKWave. Señales principales:
+
+- `clk`: reloj del sistema.
+- `rx`: línea de entrada de la UART. Cada ráfaga es un comando enviado por el testbench; en orden: `sw`, `led 1 on`, `leds 0xAA`, `calc 6 * 7` y `help`.
+- `tx`: línea de salida de la UART. Tras cada ráfaga de `rx` aparece la respuesta del shell (eco, resultado y prompt). La actividad más larga, cerca de 31–40 ms, corresponde a la lista de `help`.
+- `sw[3:0]`: se mantiene en `5` (`0101`) durante toda la simulación.
+- `led[3:0]` y `gpio[31:0]`: pasan de `0` a `2` (`0000_0002`) cuando se ejecuta `led 1 on`, y luego a `A` (`0000_000A`) con `leds 0xAA`. Entre comandos no cambian.
+- `b[7:0]` e `i`: byte e índice de bit que maneja el testbench mientras envía y recibe por UART (`i = 8` indica el fin del byte, `20` es el espacio).
+
+### 3. Detalle del comando `led 1 on` (zoom 12–13 ms)
+
+![Zoom a la transmisión UART del comando led 1 on](https://github.com/user-attachments/assets/a7618367-74be-4596-a01d-2f82b96d1fe8)
+
+Acercamiento a la ejecución de `led 1 on`. Cada ráfaga de `rx` y `tx` es una trama UART a 115200 baudios (inicio, 8 bits de datos y parada), y `b[7:0]` muestra el byte en ASCII:
+
+| Bytes | ASCII | Significado |
+|---|---|---|
+| `6C 65 64` | `l e d` | comando `led` |
+| `20 31 20` | ` 1 ` | espacio, LED número 1, espacio |
+| `6F 6E` | `o n` | argumento `on` |
+| `0D 0A` | `\r\n` | Enter: fin de la línea |
+| `6F 6B 0D 0A` | `o k \r \n` | respuesta `ok` del shell |
+| `3E 20` | `> ` | nuevo prompt |
+
+Después del Enter (`0D 0A`), `led[3:0]` y `gpio` cambian a `2`, es decir, el LED 1 se enciende. Solo entonces el shell transmite `ok` y el prompt.
 
 ## Video
 
