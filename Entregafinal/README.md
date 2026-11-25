@@ -190,8 +190,7 @@ Acercamiento a la ejecución de `led 1 on`. Cada ráfaga de `rx` y `tx` es una t
 Después del Enter (`0D 0A`), `led[3:0]` y `gpio` cambian a `2`, es decir, el LED 1 se enciende. Solo entonces el shell transmite `ok` y el prompt.
 
 ## Video
-
-
+[video funcionamiento](https://youtu.be/5abi2qT-kco)
 
 ## Conclusiones
 - El shell funcionó correctamente: recibió, separó e interpretó cada comando, y respondió por la UART a 115200 baudios.
